@@ -1920,53 +1920,45 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 (function(){
   var vid = document.getElementById('hero-bg-video');
   if (!vid) return;
-  var targetTime = 0;
-  var prevX = null;
-  var rafPending = false;
-  var isSeeking = false;
 
-  function doSeek(){
-    rafPending = false;
-    if (!vid.duration) return;
-    if (isSeeking) {
-      // Kuyruğa al, seeked gelince tekrar dene
-      rafPending = true;
-      requestAnimationFrame(doSeek);
-      return;
-    }
-    isSeeking = true;
-    vid.currentTime = targetTime;
-  }
+  // Her zaman loop & autoplay
+  vid.loop = true;
+  vid.play().catch(function(){});
 
-  vid.addEventListener('seeked', function(){
-    isSeeking = false;
-    if (rafPending) { rafPending = false; requestAnimationFrame(doSeek); }
-  });
+  // Parallax mouse takibi (sadece masaüstü)
+  var mouseX = 0.5, mouseY = 0.5;
+  var curX  = 0.5, curY  = 0.5;
+  var rafId = null;
 
   window.addEventListener('mousemove', function(e){
     if (window.innerWidth < 1024) return;
-    var x = e.clientX;
-    if (prevX === null) { prevX = x; return; }
-    var delta = x - prevX;
-    prevX = x;
-    if (!vid.duration) return;
-    targetTime += (delta / window.innerWidth) * vid.duration;
-    targetTime = Math.max(0, Math.min(vid.duration, targetTime));
-    if (!rafPending && !isSeeking) {
-      rafPending = true;
-      requestAnimationFrame(doSeek);
-    }
+    mouseX = e.clientX / window.innerWidth;
+    mouseY = e.clientY / window.innerHeight;
   }, {passive: true});
 
-  function checkMobile(){
-    if (window.innerWidth < 1024) {
-      vid.loop = true;
-      vid.play().catch(function(){});
-    }
+  function animate(){
+    curX += (mouseX - curX) * 0.04;
+    curY += (mouseY - curY) * 0.04;
+    var tx = (curX - 0.5) * 28;  // ±14px yatay
+    var ty = (curY - 0.5) * 18;  // ±9px dikey
+    vid.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(1.08)';
+    rafId = requestAnimationFrame(animate);
   }
-  vid.addEventListener('loadedmetadata', checkMobile);
-  window.addEventListener('resize', checkMobile, {passive: true});
-  checkMobile();
+
+  function startParallax(){
+    if (window.innerWidth >= 1024 && !rafId) { animate(); }
+  }
+  function stopParallax(){
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    vid.style.transform = 'scale(1)';
+  }
+
+  window.addEventListener('resize', function(){
+    if (window.innerWidth < 1024) stopParallax();
+    else startParallax();
+  }, {passive: true});
+
+  startParallax();
 })();
 
 // ── Hamburger X Animation ──
