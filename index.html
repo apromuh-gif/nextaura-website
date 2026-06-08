@@ -1921,26 +1921,25 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
   var vid = document.getElementById('hero-bg-video');
   if (!vid) return;
 
-  // Her zaman loop & autoplay
   vid.loop = true;
+  vid.muted = true;
   vid.play().catch(function(){});
+  vid.style.willChange = 'transform';
 
-  // Mouse takibi: figürü gerçek zamanlı olarak mouse yönüne çek
-  var targetX = 55, targetY = 50; // başlangıç object-position (%)
-  var curX = 55, curY = 50;
+  var tx = 0, ty = 0, cx = 0, cy = 0;
 
-  window.addEventListener('mousemove', function(e){
-    // Mouse ekranın neresinde? → figürün konumunu kaydır
-    var mx = e.clientX / window.innerWidth;   // 0..1
-    var my = e.clientY / window.innerHeight;  // 0..1
-    targetX = 55 + (mx - 0.5) * 30; // 40% .. 70%
-    targetY = 50 + (my - 0.5) * 25; // 37% .. 62%
-  }, {passive: true});
+  // Gerçek zamanlı mouse takibi — document üzerinde dinle
+  document.addEventListener('mousemove', function(e){
+    tx = (e.clientX / window.innerWidth  - 0.5) * 80;  // ±40px yatay
+    ty = (e.clientY / window.innerHeight - 0.5) * 50;  // ±25px dikey
+  });
 
+  // RAF loop — smooth interpolation ile figürü kaydır
   (function loop(){
-    curX += (targetX - curX) * 0.08;
-    curY += (targetY - curY) * 0.08;
-    vid.style.objectPosition = curX.toFixed(2) + '% ' + curY.toFixed(2) + '%';
+    cx += (tx - cx) * 0.10;
+    cy += (ty - cy) * 0.10;
+    // scale(1.2) → kenar boşluğu: 1440px ekranda her yönde 144px buffer
+    vid.style.transform = 'translate(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px) scale(1.2)';
     requestAnimationFrame(loop);
   })();
 })();
