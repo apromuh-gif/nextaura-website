@@ -1930,7 +1930,7 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
   // için videoyu mouse'a göre kare kare sarıyoruz (scrubbing):
   //   mouse yatay konumu  →  video zaman çizgisi (kafa o yöne döner)
   //   mouse durunca/çıkınca → video kendi kendine oynamaya devam eder (ambient)
-  var dur = 0, target = 0, curT = 0, scrubbing = false, idleTimer = null;
+  var dur = 0, target = 0, scrubbing = false, seeking = false, idleTimer = null;
 
   function setDur(){ dur = vid.duration || dur || 4; }
   vid.addEventListener('loadedmetadata', setDur);
@@ -1938,11 +1938,27 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
   vid.play().catch(function(){});         // başlangıçta ambient
 
+  // Hedef kareye anlık seek; bir önceki seek bitmeden yenisini yığmaz
+  // → 4K klipte bile pürüzsüz, gecikmesiz kafa takibi.
+  function applySeek(){
+    if (!dur) return;
+    var t = Math.max(0, Math.min(dur - 0.04, target));
+    if (!seeking && Math.abs(t - vid.currentTime) > 0.001){
+      seeking = true;
+      try { vid.currentTime = t; } catch(_){ seeking = false; }
+    }
+  }
+  vid.addEventListener('seeked', function(){
+    seeking = false;
+    if (scrubbing) applySeek();           // seek biter bitmez en güncel hedefe atla
+  });
+
   document.addEventListener('mousemove', function(e){
     setDur();
-    var mx = e.clientX / window.innerWidth;            // 0..1 (sol→sağ)
-    target = Math.max(0, Math.min(dur - 0.04, mx * dur));
+    if (!dur) return;
     if (!scrubbing){ scrubbing = true; vid.pause(); }
+    target = (e.clientX / window.innerWidth) * dur;   // mouse X → video zamanı (mutlak)
+    applySeek();
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(function(){                 // ~1.4sn hareketsizlik → ambient
       scrubbing = false;
@@ -1955,17 +1971,6 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
     if (idleTimer) clearTimeout(idleTimer);
     vid.play().catch(function(){});
   });
-
-  // RAF loop — hedefe yumuşak seek; ambient'te gerçek zamanı takip et
-  (function loop(){
-    if (scrubbing && dur){
-      curT += (target - curT) * 0.45;
-      try { vid.currentTime = curT; } catch(_){}
-    } else {
-      curT = vid.currentTime || curT;
-    }
-    requestAnimationFrame(loop);
-  })();
 })();
 
 // ── Hamburger X Animation ──
