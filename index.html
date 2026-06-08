@@ -1925,40 +1925,24 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
   vid.loop = true;
   vid.play().catch(function(){});
 
-  // Parallax mouse takibi (sadece masaüstü)
-  var mouseX = 0.5, mouseY = 0.5;
-  var curX  = 0.5, curY  = 0.5;
-  var rafId = null;
+  // Mouse takibi: figürü gerçek zamanlı olarak mouse yönüne çek
+  var targetX = 55, targetY = 50; // başlangıç object-position (%)
+  var curX = 55, curY = 50;
 
   window.addEventListener('mousemove', function(e){
-    if (window.innerWidth < 1024) return;
-    mouseX = e.clientX / window.innerWidth;
-    mouseY = e.clientY / window.innerHeight;
+    // Mouse ekranın neresinde? → figürün konumunu kaydır
+    var mx = e.clientX / window.innerWidth;   // 0..1
+    var my = e.clientY / window.innerHeight;  // 0..1
+    targetX = 55 + (mx - 0.5) * 30; // 40% .. 70%
+    targetY = 50 + (my - 0.5) * 25; // 37% .. 62%
   }, {passive: true});
 
-  function animate(){
-    curX += (mouseX - curX) * 0.04;
-    curY += (mouseY - curY) * 0.04;
-    var tx = (curX - 0.5) * 28;  // ±14px yatay
-    var ty = (curY - 0.5) * 18;  // ±9px dikey
-    vid.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(1.08)';
-    rafId = requestAnimationFrame(animate);
-  }
-
-  function startParallax(){
-    if (window.innerWidth >= 1024 && !rafId) { animate(); }
-  }
-  function stopParallax(){
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    vid.style.transform = 'scale(1)';
-  }
-
-  window.addEventListener('resize', function(){
-    if (window.innerWidth < 1024) stopParallax();
-    else startParallax();
-  }, {passive: true});
-
-  startParallax();
+  (function loop(){
+    curX += (targetX - curX) * 0.08;
+    curY += (targetY - curY) * 0.08;
+    vid.style.objectPosition = curX.toFixed(2) + '% ' + curY.toFixed(2) + '%';
+    requestAnimationFrame(loop);
+  })();
 })();
 
 // ── Hamburger X Animation ──
