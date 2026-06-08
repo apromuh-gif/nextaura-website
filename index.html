@@ -1930,8 +1930,8 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
   // Gerçek zamanlı mouse takibi — document üzerinde dinle
   document.addEventListener('mousemove', function(e){
-    tx = (e.clientX / window.innerWidth  - 0.5) * 80;  // ±40px yatay
-    ty = (e.clientY / window.innerHeight - 0.5) * 50;  // ±25px dikey
+    tx = (e.clientX / window.innerWidth  - 0.5) * 160;  // ±80px yatay
+    ty = (e.clientY / window.innerHeight - 0.5) * 100;  // ±50px dikey
   });
 
   // RAF loop — smooth interpolation ile figürü kaydır
