@@ -1924,22 +1924,24 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
   vid.loop = true;
   vid.muted = true;
   vid.play().catch(function(){});
-  vid.style.willChange = 'transform';
+  vid.style.willChange = 'object-position';
+  vid.style.transform = 'none';
 
-  var tx = 0, ty = 0, cx = 0, cy = 0;
+  // objectPosition kadrajını kaydırarak figürü imlece yönlendir (transform değil!)
+  var tx = 55, ty = 50, cx = 55, cy = 50;
 
-  // Gerçek zamanlı mouse takibi — document üzerinde dinle
   document.addEventListener('mousemove', function(e){
-    tx = (e.clientX / window.innerWidth  - 0.5) * 160;  // ±80px yatay
-    ty = (e.clientY / window.innerHeight - 0.5) * 100;  // ±50px dikey
+    var mx = e.clientX / window.innerWidth;
+    var my = e.clientY / window.innerHeight;
+    tx = 55 + (mx - 0.5) * 60;  // 25–85% yatay
+    ty = 50 + (my - 0.5) * 50;  // 25–75% dikey
   });
 
-  // RAF loop — smooth interpolation ile figürü kaydır
+  // RAF loop — yumuşak interpolasyon ile kadrajı kaydır
   (function loop(){
-    cx += (tx - cx) * 0.10;
-    cy += (ty - cy) * 0.10;
-    // scale(1.2) → kenar boşluğu: 1440px ekranda her yönde 144px buffer
-    vid.style.transform = 'translate(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px) scale(1.2)';
+    cx += (tx - cx) * 0.08;
+    cy += (ty - cy) * 0.08;
+    vid.style.objectPosition = cx.toFixed(1) + '% ' + cy.toFixed(1) + '%';
     requestAnimationFrame(loop);
   })();
 })();
