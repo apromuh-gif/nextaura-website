@@ -1923,25 +1923,47 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
   vid.loop = true;
   vid.muted = true;
-  vid.play().catch(function(){});
-  vid.style.willChange = 'transform';
+  vid.playsInline = true;
   vid.style.objectPosition = '55% 6%';   // kafa tam görünsün diye kadraj yukarıda
 
-  // Video 3840x2160 (16:9). object-position taşma olmayan eksende çalışmaz,
-  // bu yüzden parallax'ı transform+scale ile yapıyoruz → her en/boy oranında görünür hareket.
-  var SCALE = 1.18;                       // her yönde ~%9 tampon (kenar boşluğu açılmaz)
-  var tx = 0, ty = 0, cx = 0, cy = 0;
+  // Klip içinde figürün KAFASI sağa-sola dönüyor. Bu yüzden gerçek "kafa takibi"
+  // için videoyu mouse'a göre kare kare sarıyoruz (scrubbing):
+  //   mouse yatay konumu  →  video zaman çizgisi (kafa o yöne döner)
+  //   mouse durunca/çıkınca → video kendi kendine oynamaya devam eder (ambient)
+  var dur = 0, target = 0, curT = 0, scrubbing = false, idleTimer = null;
+
+  function setDur(){ dur = vid.duration || dur || 4; }
+  vid.addEventListener('loadedmetadata', setDur);
+  vid.addEventListener('durationchange', setDur);
+
+  vid.play().catch(function(){});         // başlangıçta ambient
 
   document.addEventListener('mousemove', function(e){
-    tx = (e.clientX / window.innerWidth  - 0.5) * 200;  // ±100px yatay
-    ty = (e.clientY / window.innerHeight - 0.5) * 110;  // ±55px dikey
+    setDur();
+    var mx = e.clientX / window.innerWidth;            // 0..1 (sol→sağ)
+    target = Math.max(0, Math.min(dur - 0.04, mx * dur));
+    if (!scrubbing){ scrubbing = true; vid.pause(); }
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(function(){                 // ~1.4sn hareketsizlik → ambient
+      scrubbing = false;
+      vid.play().catch(function(){});
+    }, 1400);
   });
 
-  // RAF loop — yumuşak interpolasyon ile figürü imlece doğru kaydır
+  document.addEventListener('mouseleave', function(){   // mouse sayfadan çıkınca ambient
+    scrubbing = false;
+    if (idleTimer) clearTimeout(idleTimer);
+    vid.play().catch(function(){});
+  });
+
+  // RAF loop — hedefe yumuşak seek; ambient'te gerçek zamanı takip et
   (function loop(){
-    cx += (tx - cx) * 0.10;
-    cy += (ty - cy) * 0.10;
-    vid.style.transform = 'translate(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px) scale(' + SCALE + ')';
+    if (scrubbing && dur){
+      curT += (target - curT) * 0.18;
+      try { vid.currentTime = curT; } catch(_){}
+    } else {
+      curT = vid.currentTime || curT;
+    }
     requestAnimationFrame(loop);
   })();
 })();
