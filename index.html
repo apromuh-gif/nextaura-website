@@ -1959,7 +1959,7 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
   // RAF loop — hedefe yumuşak seek; ambient'te gerçek zamanı takip et
   (function loop(){
     if (scrubbing && dur){
-      curT += (target - curT) * 0.18;
+      curT += (target - curT) * 0.45;
       try { vid.currentTime = curT; } catch(_){}
     } else {
       curT = vid.currentTime || curT;
