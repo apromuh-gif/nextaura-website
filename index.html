@@ -1929,18 +1929,18 @@ document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
   // Video 3840x2160 (16:9). object-position taşma olmayan eksende çalışmaz,
   // bu yüzden parallax'ı transform+scale ile yapıyoruz → her en/boy oranında görünür hareket.
-  var SCALE = 1.12;                       // her yönde ~%6 tampon (kenar boşluğu açılmaz)
+  var SCALE = 1.18;                       // her yönde ~%9 tampon (kenar boşluğu açılmaz)
   var tx = 0, ty = 0, cx = 0, cy = 0;
 
   document.addEventListener('mousemove', function(e){
-    tx = (e.clientX / window.innerWidth  - 0.5) * 120;  // ±60px yatay
-    ty = (e.clientY / window.innerHeight - 0.5) * 68;   // ±34px dikey
+    tx = (e.clientX / window.innerWidth  - 0.5) * 200;  // ±100px yatay
+    ty = (e.clientY / window.innerHeight - 0.5) * 110;  // ±55px dikey
   });
 
   // RAF loop — yumuşak interpolasyon ile figürü imlece doğru kaydır
   (function loop(){
-    cx += (tx - cx) * 0.08;
-    cy += (ty - cy) * 0.08;
+    cx += (tx - cx) * 0.10;
+    cy += (ty - cy) * 0.10;
     vid.style.transform = 'translate(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px) scale(' + SCALE + ')';
     requestAnimationFrame(loop);
   })();
